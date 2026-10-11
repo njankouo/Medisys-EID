@@ -1,7 +1,8 @@
 import os
 from pathlib import Path
 from dotenv import load_dotenv
-
+from datetime import timedelta
+from celery.schedules import crontab
 # 1. Charger les variables d'environnement EN PREMIER
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / '.env')
@@ -135,6 +136,38 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
+
+
+CELERY_BEAT_SCHEDULE = {
+    # 'verification-retards-chaque-matin': {
+    #     'task': 'ctn_bpf.task.check_overdue_tasks',
+    #     'schedule': 3600.0,  # 10 secondes c'est très court ! Pour 1h mettez 3600
+    # },
+    'backup-quotidien-db-models': {
+        # Remplacez 'ctn_bpf' par le nom de l'app où se trouve la tâche de backup
+        'task': 'circb_app.tasks.backup_models_and_data', 
+        'schedule': crontab(hour=3, minute=0), # S'exécute à 3h00 du matin
+    },
+}
+CELERY_BEAT_SCHEDULE = {
+    # 'verification-retards-chaque-matin': {
+    #     'task': 'ctn_bpf.task.check_overdue_tasks',
+    #     'schedule': 3600.0,  
+    # },
+    'backup-quotidien-db-models': {
+        # Remplacez 'ctn_bpf' par le nom de l'app où se trouve la tâche de backup
+        'task': 'circb_app.tasks.backup_models_and_data', 
+        'schedule': crontab(hour=3, minute=0), # S'exécute à 3h00 du matin
+    },
+}
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'dairounjankouo2019@gmail.com'
+EMAIL_HOST_PASSWORD = 'hlqb lcmx nnkc byfe' # Un mot de passe d'application Gmail, pas votre vrai mot de passe
+EMAIL_TIMEOUT = 10
+EMAIL_USE_TLS = True
 
 # Internationalization
 LANGUAGE_CODE = 'fr-fr'

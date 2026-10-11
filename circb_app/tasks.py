@@ -13,6 +13,12 @@ from .models import Echantillon, Fosa, District, Region, Patient, FicheEchantill
 import io
 import openpyxl
 from django.db import transaction
+import shutil
+
+from django.conf import settings
+from django.core.management import call_command
+from django.core.mail import EmailMessage
+
 User = get_user_model()
 
 @shared_task
@@ -302,3 +308,58 @@ def importer_rang_naissance_task(file_bytes):
             "status": "error",
             "message": f"Erreur lors de la lecture du fichier : {str(e)}",
         }
+
+
+
+
+@shared_task
+def backup_models_and_data():
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    backup_dir = os.path.join(settings.BASE_DIR, 'backups', timestamp.replace(':', '').replace(' ', '_'))
+    
+    status = "SUCCÈS"
+    details = []
+    path_json = None
+    
+    try:
+        os.makedirs(backup_dir, exist_ok=True)
+        
+        # 1. Dump BDD
+        path_json = os.path.join(backup_dir, 'db.json')
+        with open(path_json, 'w', encoding='utf-8') as f:
+            call_command('dumpdata', natural_foreign=True, natural_primary=True, stdout=f)
+        details.append(f"✅ Base de données sauvegardée : {path_json}")
+
+        # 2. Copie models.py
+        app_name = 'circb_app' # Remplacez par le nom exact de votre app si besoin
+        models_path = os.path.join(settings.BASE_DIR, app_name, 'models.py')
+        if os.path.exists(models_path):
+            shutil.copy2(models_path, os.path.join(backup_dir, 'models.py'))
+            details.append("✅ Fichier models.py copié avec succès.")
+        else:
+            details.append("⚠️ Attention : models.py introuvable.")
+
+    except Exception as e:
+        status = "ÉCHEC"
+        details.append(f"❌ Erreur critique lors du backup : {str(e)}")
+
+    # 3. Préparation et envoi de l'email de notification (sans pièce jointe)
+    sujet = f"[{status}] Rapport de Sauvegarde Automatique - {timestamp}"
+    message = f"Rapport généré le {timestamp}\n\nStatut global : {status}\n\nActions effectuées :\n"
+    message += "\n".join(details)
+    message += f"\n\nEmplacement sur le serveur : {backup_dir}"
+
+    try:
+        email = EmailMessage(
+            subject=sujet,
+            body=message,
+            from_email=settings.EMAIL_HOST_USER,
+            to=['dairounjankouo2019@gmail.com'],
+        )
+        # Aucune pièce jointe n'est ajoutée ici, l'e-mail partira instantanément.
+        email.send(fail_silently=False)
+        details.append("✅ E-mail de rapport envoyé avec succès.")
+    except Exception as email_error:
+        details.append(f"⚠️ Échec de l'envoi de l'e-mail (SMTP) : {str(email_error)}")
+
+    return f"Backup terminé. {details}"

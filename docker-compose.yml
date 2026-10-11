@@ -38,6 +38,7 @@ services:
     volumes:
       - static_volume:/app/staticfiles
       - media_volume:/app/media
+      - ./backups:/app/backups:z
     networks:
       - circb_net
 
@@ -51,6 +52,8 @@ services:
     depends_on:
       - db
       - redis
+    volumes:
+      - ./backups:/app/backups:z
     networks:
       - circb_net
 
@@ -91,6 +94,21 @@ services:
     depends_on:
       - web
       - metabase
+    networks:
+      - circb_net
+
+  celery-beat:
+    build: .
+    container_name: circb_celery_beat
+    restart: always
+    command: celery -A circb_projet beat -l info
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - ./backups:/app/backups:z
     networks:
       - circb_net
 
