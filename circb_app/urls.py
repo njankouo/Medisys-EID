@@ -243,6 +243,9 @@ urlpatterns = [
 
     path('verifier-code-patient/', views.verifier_code_patient, name='verifier_code_patient'),
 
+
+    path('dashboard-metabase/', views.DashboardMetabase, name='dashboard-metabase')
+
     
 
     

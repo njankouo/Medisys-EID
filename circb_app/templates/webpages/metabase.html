@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="fr" class="h-full bg-[#f8f9fa]">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau de Bord Décisionnel - CIRCB</title>
+    
+    <!-- Tailwind CSS -->
+    {%load static%}
+
+      <script src="{%static 'js/tailwind.js'%}"></script>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+        metabase-dashboard {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body class="h-full flex flex-col overflow-hidden text-gray-900 antialiased">
+
+    <!-- CONTENEUR PRINCIPAL (STYLE CONTROLE PANEL ODOO) -->
+    <div id="app-wrapper" class="w-full h-full flex flex-col m-0 p-3 sm:p-4 gap-3 max-w-full overflow-hidden">
+        
+        <!-- EN-TÊTE ODOO APP BAR / CONTROL PANEL -->
+        <header class="w-full px-5 py-3 bg-white border border-gray-200 rounded-md flex flex-col lg:flex-row lg:items-center justify-between gap-4 shrink-0 shadow-xs">
+            
+            <!-- SECTION GAUCHE : FIL D'ARIANE & TITRE -->
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-[#714B67] rounded text-white shrink-0 flex items-center justify-center">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                    </svg>
+                </div>
+                <div>
+                    <!-- Fil d'Ariane formel -->
+                    <div class="flex items-center gap-1.5 text-xs text-gray-500 mb-0.5 font-medium">
+                        <span>CIRCB</span>
+                        <span class="text-gray-300">/</span>
+                        <span>Analytique</span>
+                        <span class="text-gray-300">/</span>
+                        <span id="breadcrumb-current" class="text-gray-900 font-semibold">Laboratoire</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-sm font-bold text-gray-900 tracking-tight">Tableau de Bord Décisionnel</h1>
+                        <span class="hidden md:inline-flex items-center text-xs font-medium bg-gray-100 text-gray-700 px-2 py-0.5 rounded border border-gray-200">
+                            {{ user_role_label }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION CENTRE : BASCULE DE VUE (ONGLÈTS STYLE ODOO) -->
+            {% if has_multiple_dashboards %}
+            <div class="flex bg-gray-100 p-0.5 rounded border border-gray-200 self-start lg:self-center">
+                <button id="btn-samples" onclick="switchDashboard('{{ metabase_token }}', 'btn-samples', 'Laboratoire')" 
+                        class="dash-tab-btn flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded transition-all bg-[#714B67] text-white cursor-pointer shadow-xs">
+                    <svg class="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.104v15.792a2.25 2.25 0 01-3.104 2.072 2.25 2.25 0 01-1.396-2.072V3.104M14.25 3.104v15.792a2.25 2.25 0 003.104 2.072 2.25 2.25 0 001.396-2.072V3.104M3.104 9.75h17.792" />
+                    </svg>
+                    <span>LABORATOIRE</span>
+                </button>
+
+                <button id="btn-general" onclick="switchDashboard('{{ metabase_token_secondary }}', 'btn-general', 'Unité Technique')" 
+                        class="dash-tab-btn flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded transition-all text-gray-600 hover:text-gray-900 cursor-pointer">
+                    <svg class="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+                    </svg>
+                    <span>UNITÉ TECHNIQUE</span>
+                </button>
+            </div>
+            {% endif %}
+
+            <!-- SECTION DROITE : ACTIONS ET STATUT -->
+            <div class="flex items-center gap-2 self-end lg:self-center">
+                
+                <!-- Bouton Accueil -->
+                <a href="/dashboard/" 
+                   title="Retour à l'accueil" 
+                   class="px-3 py-1.5 bg-white hover:bg-gray-50 border border-gray-300 rounded text-xs font-medium text-gray-700 flex items-center gap-1.5 transition-all shadow-xs cursor-pointer">
+                    <svg class="w-3.5 h-3.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                    </svg>
+                    <span>Accueil</span>
+                </a>
+
+                <div class="h-4 w-[1px] bg-gray-200 mx-0.5 hidden sm:block"></div>
+
+               
+
+                <!-- Bouton Actualiser -->
+                <button onclick="refreshDashboard()" 
+                        title="Actualiser" 
+                        class="p-1.5 text-gray-600 hover:text-gray-900 bg-white hover:bg-gray-50 border border-gray-300 rounded transition-all flex items-center justify-center cursor-pointer shadow-xs">
+                    <svg id="refresh-icon" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                    </svg>
+                </button>
+
+                <!-- Bouton Plein Écran -->
+                <button onclick="toggleFullScreen()" 
+                        title="Plein écran" 
+                        class="p-1.5 text-gray-600 hover:text-gray-900 bg-white hover:bg-gray-50 border border-gray-300 rounded transition-all flex items-center justify-center cursor-pointer shadow-xs">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+                    </svg>
+                </button>
+
+            </div>
+        </header>
+
+        <!-- ZONE D'INTÉGRATION METABASE -->
+        <div class="w-full flex-1 relative min-h-0 bg-white rounded border border-gray-200 overflow-hidden shadow-xs">
+            <div id="dashboard-container" class="w-full h-full relative overflow-hidden flex flex-col">
+                
+                <!-- Skeleton Loader sobre -->
+                <div id="dashboard-skeleton" class="absolute inset-0 z-40 flex flex-col items-center justify-center bg-white transition-opacity duration-300">
+                    <div class="w-6 h-6 border-2 border-gray-200 border-t-[#714B67] rounded-full animate-spin mb-2"></div>
+                    <span class="text-xs font-medium text-gray-500 uppercase tracking-wide">Chargement...</span>
+                </div>
+
+                <!-- Composant Metabase -->
+                <metabase-dashboard 
+                    id="metabase-view"
+                    token="{{ metabase_token }}" 
+                    with-title="false" 
+                    with-downloads="true"
+                    class="w-full h-full block border-none m-0 p-0">
+                </metabase-dashboard>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- SCRIPTS -->
+    <script defer src="{{ metabase_site_url }}/app/embed.js"></script>
+    <script>
+        window.metabaseConfig = {
+            "theme": { "preset": "light" },
+            "isGuest": true,
+            "instanceUrl": "{{ metabase_site_url }}"
+        };
+
+        function showSkeleton() {
+            const skeleton = document.getElementById('dashboard-skeleton');
+            if (skeleton) skeleton.classList.remove('opacity-0', 'pointer-events-none');
+        }
+
+        function hideSkeleton() {
+            const skeleton = document.getElementById('dashboard-skeleton');
+            if (skeleton) skeleton.classList.add('opacity-0', 'pointer-events-none');
+        }
+
+        function switchDashboard(newToken, activeBtnId, labelName) {
+            showSkeleton();
+            
+            const breadcrumbEl = document.getElementById('breadcrumb-current');
+            if (breadcrumbEl) breadcrumbEl.textContent = labelName;
+
+            const metabaseEl = document.getElementById('metabase-view');
+            if (metabaseEl) metabaseEl.setAttribute('token', newToken);
+
+            document.querySelectorAll('.dash-tab-btn').forEach(btn => {
+                btn.classList.remove('bg-[#714B67]', 'text-white', 'font-semibold', 'shadow-xs');
+                btn.classList.add('text-gray-600', 'font-medium', 'hover:text-gray-900');
+                
+                const svg = btn.querySelector('svg');
+                if (svg) {
+                    svg.classList.remove('text-white');
+                    svg.classList.add('text-gray-400');
+                }
+            });
+
+            const activeBtn = document.getElementById(activeBtnId);
+            if (activeBtn) {
+                activeBtn.classList.add('bg-[#714B67]', 'text-white', 'font-semibold', 'shadow-xs');
+                activeBtn.classList.remove('text-gray-600', 'font-medium', 'hover:text-gray-900');
+                
+                const svg = activeBtn.querySelector('svg');
+                if (svg) {
+                    svg.classList.remove('text-gray-400');
+                    svg.classList.add('text-white');
+                }
+            }
+
+            setTimeout(hideSkeleton, 500);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(hideSkeleton, 800);
+        });
+
+        function refreshDashboard() {
+            const icon = document.getElementById('refresh-icon');
+            if (icon) icon.classList.add('animate-spin');
+            window.location.reload();
+        }
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => console.error(err));
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+            }
+        }
+    </script>
+</body>
+</html>

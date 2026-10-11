@@ -4554,3 +4554,43 @@ def verifier_code_patient(request):
         qs = qs.exclude(pk=patient_id)
 
     return JsonResponse({'exists': qs.exists()})
+
+
+def DashboardMetabase(request):
+    user = request.user
+
+    # 1. CAS SUPERUTILISATEUR : Accès aux deux tableaux de bord
+    if user.is_superuser:
+        token_echantillons = generate_metabase_token(3)
+        token_general = generate_metabase_token(2)
+
+        context = {
+            "metabase_token": token_echantillons,
+            "metabase_token_secondary": token_general,
+            "has_multiple_dashboards": True,
+            "metabase_site_url": settings.METABASE_SITE_URL,
+            "user_role_label": "Superutilisateur",
+        }
+
+    # 2. CAS RÔLE ÉCHANTILLONS UNIK : Accès STRICTEMENT au Dashboard 3
+    elif user.has_perm('circb_app.peut_voir_tableau_de_bord_echantillons'):
+        token_echantillons = generate_metabase_token(3)
+
+        context = {
+            "metabase_token": token_echantillons,
+            "has_multiple_dashboards": False,
+            "metabase_site_url": settings.METABASE_SITE_URL,
+            "user_role_label": "Tableau Échantillons",
+        }
+
+    # 3. CAS PAR DÉFAUT : Accès uniquement au Dashboard Général (ID 2)
+    else:
+        token_general = generate_metabase_token(2)
+
+        context = {
+            "metabase_token": token_general,
+            "has_multiple_dashboards": False,
+            "metabase_site_url": settings.METABASE_SITE_URL,
+            "user_role_label": "Tableau Général",
+        }
+    return render(request,'webpages/metabase.html', context)
